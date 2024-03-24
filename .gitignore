@@ -162,4 +162,4 @@ cython_debug/
 # Development dirs
 demo_out/
 training_images/
-test_images/
+testing_images/
