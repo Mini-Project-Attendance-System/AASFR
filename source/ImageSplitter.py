@@ -7,18 +7,6 @@ import face_recognition
 
 class ImageSplitter:
 
-    def getFaceBoundingBoxes(self, rgb_image):
-
-        try:
-
-            return face_recognition.face_locations(rgb_image)
-
-        except Exception as e:
-
-            print(f"Exception warning when detecting faces :\n {e}")
-
-            return []
-
     def saveDetectedFaces(self, image_path, save_path):
 
         try:
@@ -48,7 +36,7 @@ class ImageSplitter:
             return -2
 
         rgb_image = face_recognition.load_image_file(image_path)
-        detected_faces = self.getFaceBoundingBoxes(rgb_image)
+        detected_faces = face_recognition.face_locations(rgb_image)
 
         for face in detected_faces:
 

@@ -163,3 +163,4 @@ cython_debug/
 demo_out/
 training_images/
 testing_images/
+trained_models/
