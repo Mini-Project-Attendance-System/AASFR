@@ -1,21 +1,20 @@
 from os import listdir, path
-from math import sqrt
 from pickle import dump, load
 
 from cv2 import resize
 from numpy import pad
 from skimage.feature import hog
-from sklearn import neighbors
+from sklearn.svm import SVC
 from face_recognition import load_image_file
 
-class KNNTrainer:
+class SVMTrainer:
 
-    def __init__(self, classifier_knn = None, pixels_per_cell = 16, cells_per_block = 4):
+    def __init__(self, classifier_svm = None, pixels_per_cell = 16, cells_per_block = 4):
 
         self.hog_features = []
         self.images = []
         self.classes = []
-        self.classifier_knn = classifier_knn
+        self.classifier_svm = classifier_svm
         self.pixels_per_cell = pixels_per_cell
         self.cells_per_block = cells_per_block
         self.max_dim1 = 0
@@ -59,51 +58,47 @@ class KNNTrainer:
 
             self.hog_features.append(features)
 
-    def trainKNN(self, n_neighbors = None, save_path = None):
+    def trainSVM(self, save_path = None):
 
-        if n_neighbors is None:
+        self.classifier_svm = SVC(kernel="linear")
 
-            n_neighbors = int(round(sqrt(len(self.images))))
+        self.classifier_svm.fit(self.hog_features, self.classes)
 
-        self.classifier_knn = neighbors.KNeighborsClassifier(n_neighbors = n_neighbors, algorithm="ball_tree", weights="distance")
-
-        self.classifier_knn.fit(self.hog_features, self.classes)
-
-        self.classifier_knn.max_dim1 = self.max_dim1
-        self.classifier_knn.max_dim2 = self.max_dim2
+        self.classifier_svm.max_dim1 = self.max_dim1
+        self.classifier_svm.max_dim2 = self.max_dim2
 
         if save_path is not None:
 
-            with open(save_path, "wb+") as knn_model:
+            with open(save_path, "wb+") as svm_model:
 
-                dump(self.classifier_knn, knn_model)
+                dump(self.classifier_svm, svm_model)
 
-    def predictFace(self, image_path,  model_path = None, classifier_knn = None):
+    def predictFace(self, image_path, model_path = None, classifier_svm = None):
 
         if not path.isfile(image_path):
 
             raise Exception("The given image path is not an image file : ", image_path)
 
-        if model_path is None and classifier_knn is None and self.classifier_knn is None:
+        if model_path is None and classifier_svm is None and self.classifier_knn is None:
 
-            raise Exception("Provide model_path / trained KNeighborsClassifier object /\
+            raise Exception("Provide model_path / trained SVM Classifier /\
                 train the built in classifier before running predict")
 
-        if model_path is None and classifier_knn is None:
+        if model_path is None and classifier_svm is None:
 
-            classifier = self.classifier_knn
+            classifier = self.classifier_svm
 
-        if model_path is None and self.classifier_knn is None:
+        if model_path is None and self.classifier_svm is None:
 
-            classifier = classifier_knn
+            classifier = classifier_svm
 
-        if classifier_knn is None and self.classifier_knn is None:
+        if classifier_svm is None and self.classifier_svm is None:
 
             with open(model_path, "rb") as model:
 
                 classifier = load(model)
 
-        image = load_image_file(image_path, mode = "L")
+        image = load_image_file(image_path, mode="L")
 
         if ((image.shape[0] >= classifier.max_dim1) or (image.shape[1] >= classifier.max_dim2)):
 
