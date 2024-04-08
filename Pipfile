@@ -7,6 +7,10 @@ name = "pypi"
 dlib = "*"
 numpy = "*"
 opencv-python = "*"
+scikit-learn = "*"
+scikit-image = "*"
+matplotlib = "*"
+face-recognition = "*"
 
 [dev-packages]
 

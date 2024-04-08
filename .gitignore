@@ -164,3 +164,7 @@ demo_out/
 training_images/
 testing_images/
 trained_models/
+lfw_training/
+lfw_testing/
+lfw-deepfunneled/
+lfw-names.txt
