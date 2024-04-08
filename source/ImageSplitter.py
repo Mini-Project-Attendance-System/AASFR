@@ -4,10 +4,15 @@ import zlib
 
 import cv2
 import face_recognition
+from imageio import save
 
 class ImageSplitter:
 
-    def saveDetectedFaces(self, image_path, save_path):
+    def findFaces(self, image_path, save_path = None):
+
+        extracted_faces = []
+
+        print(f"Processing image : {image_path}")
 
         try:
 
@@ -19,28 +24,42 @@ class ImageSplitter:
 
             return -1
 
-        try:
+        if (save_path is not None):
 
-            if os.path.exists(save_path):
+            try:
 
-                os.path.isdir(save_path)
+                if os.path.exists(save_path):
 
-            else:
+                    os.path.isdir(save_path)
 
-                os.makedirs(save_path, exist_ok=True)
+                else:
 
-        except Exception as e:
+                    os.makedirs(save_path, exist_ok=True)
 
-            print(f"Invalid save path :\n {e}")
+            except Exception as e:
 
-            return -2
+                print(f"Invalid save path :\n {e}")
+
+                return -2
 
         rgb_image = face_recognition.load_image_file(image_path)
         detected_faces = face_recognition.face_locations(rgb_image)
 
+        print(f"Found {detected_faces.__len__()} faces in {image_path}")
+
         for face in detected_faces:
 
             extracted_face = rgb_image[face[0]:face[2], face[3]:face[1]]
-            crc_hash = zlib.crc32(pickle.dumps(face) + pickle.dumps(extracted_face))
 
-            cv2.imwrite(f"{save_path}/face_{crc_hash}.jpeg", extracted_face)
+            if (save_path is None):
+
+                extracted_faces.append(extracted_face)
+
+            if (save_path is not None):
+
+                crc_hash = zlib.crc32(pickle.dumps(face) + pickle.dumps(extracted_face))
+
+                print(f"Saving {image_path} to : {save_path} as face_{crc_hash}")
+                cv2.imwrite(f"{save_path}/face_{crc_hash}.jpeg", extracted_face)
+
+        return extracted_faces

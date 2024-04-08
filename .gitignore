@@ -160,11 +160,10 @@ cython_debug/
 #.idea/
 
 # Development dirs
-demo_out/
+preprocessed_training_images/
+preprocessed_testing_images/
 training_images/
 testing_images/
 trained_models/
-lfw_training/
-lfw_testing/
 lfw-deepfunneled/
 lfw-names.txt

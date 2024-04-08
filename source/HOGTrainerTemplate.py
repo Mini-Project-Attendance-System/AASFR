@@ -94,4 +94,6 @@ class HOGTrainerTemplate:
                             cells_per_block = (self.cells_per_block, self.cells_per_block),
                             block_norm = "L2")
 
-        print(classifier.predict([features]))
+        prediction = classifier.predict([features])[0]
+
+        return f"Prediction for {image_path} : {prediction}"
