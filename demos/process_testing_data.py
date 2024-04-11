@@ -8,6 +8,10 @@ if __name__ == "__main__":
     root = "./preprocessed_testing_images"
     save = "./testing_images"
 
-    for image in os.listdir(root):
+    for directory in os.listdir(root):
 
-        splitter.findFaces(os.path.join(root, image), save)
+        print(f"Processing data in {directory}")
+
+        for image in os.listdir(os.path.join(root, directory)):
+
+            splitter.findFaces(os.path.join(root, directory, image), os.path.join(save, directory))

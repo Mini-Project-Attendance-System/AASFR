@@ -199,4 +199,4 @@ class HOGTrainerTemplate:
 
         self.logger.info(f"Predicted class for image loaded from {image_path} as {prediction} in {perf_counter() - start_time}s")
 
-        return f"Prediction for {image_path} : {prediction}"
+        return prediction

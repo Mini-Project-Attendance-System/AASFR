@@ -1,20 +1,31 @@
-from os import listdir
+from os import listdir, path
 
-from source import KNNTrainer
+from sklearn.metrics import classification_report, accuracy_score
+
+from source import KNNTrainer, Logger
 
 if __name__ == "__main__":
 
     predictor = KNNTrainer()
 
-    for image in listdir("testing_images"):
+    logger = Logger("KNNPrediction")
+    logger.toggle_logger(True)
+    logger = logger.logger
 
-        try:
+    root = "testing_images"
 
-            prediction = predictor.predictFace(f"testing_images/{image}", "trained_models/vakibc.clf")
-            print(prediction)
+    predictions = []
+    labels = []
 
-        except Exception as e:
+    for directory in listdir(root):
 
-            print(f"{e}\nOccured for image : {image}")
+        for image in listdir(path.join(root, directory)):
 
-            continue
+            labels.append(directory)
+
+            prediction = predictor.predictFace(path.join(root, directory, image), "trained_models/vakibc.clf")
+
+            predictions.append(prediction)
+
+    logger.info(f"Accuracy score : {accuracy_score(labels, predictions)}")
+    logger.info(f"Classification report :\n{classification_report(labels, predictions)}")
