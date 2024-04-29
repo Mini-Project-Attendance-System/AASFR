@@ -19,6 +19,10 @@ if __name__ == "__main__":
 
     for directory in listdir(root):
 
+        if (directory == "_group_pics"):
+
+            continue
+
         for image in listdir(path.join(root, directory)):
 
             labels.append(directory)

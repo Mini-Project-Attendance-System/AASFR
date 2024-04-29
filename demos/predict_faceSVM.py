@@ -15,11 +15,17 @@ if __name__ == "__main__":
     root = "testing_images"
 
     predictions = []
-    labels = predictor.classes
+    labels = []
 
     for directory in listdir(root):
 
+        if (directory == "_group_pics"):
+
+            continue
+
         for image in listdir(path.join(root, directory)):
+
+            labels.append(directory)
 
             prediction = predictor.predictFace(path.join(root, directory, image), "trained_models/vakibcSVM.clf")
 
