@@ -11,7 +11,7 @@ from .Logger import Logger
 
 class HOGTrainerTemplate:
 
-    def __init__(self, classifier = None, pixels_per_cell = 16, cells_per_block = 4, logger_name = "HOGTrainerTemplate"):
+    def __init__(self, classifier = None, pixels_per_cell = 16, cells_per_block = 4, resize_dim1 = 150, resize_dim2 = 150, logger_name = "HOGTrainerTemplate"):
 
         self.hog_features = []
         self.images = []
@@ -26,6 +26,9 @@ class HOGTrainerTemplate:
         self.max_dim2 = 0
         self.max_dim1_changes = 0
         self.max_dim2_changes = 0
+
+        self.resize_dim1 = resize_dim1
+        self.resize_dim2 = resize_dim2
 
         self.logger = Logger(logger_name)
         self.logger.toggle_logger(True)
@@ -73,49 +76,45 @@ class HOGTrainerTemplate:
 
         if ((self.max_dim1_changes > 1) and (self.max_dim2_changes > 1)):
 
-            self.logger.info("Padding images with blank space for HoG training compatibility")
+            self.logger.info("Padding images with blank space and resizing for HoG training compatibility")
 
             perf_start = perf_counter()
 
-            self.padImages(visual_save_path)
-            self.logger.info(f"Time taken to pad all images and compute HoG : {perf_counter() - perf_start}s")
+            self.padSquare()
+            self.resizeReq()
+            self.computeHOG(visual_save_path)
+            self.logger.info(f"Time taken to pad and resize all images and compute HoG : {perf_counter() - perf_start}s")
 
         else:
 
             self.logger.info("No images were padded due to same dimensions on every image")
 
-    def padImages(self, visual_save_path):
+    def computeHOG(self, visual_save_path):
 
         if (visual_save_path is None):
 
             visual_save_path = "hog_visualization"
 
-            try:
+        try:
 
-                self.logger.info(f"Checking save path existence : {visual_save_path}")
+            self.logger.info(f"Checking save path existence : {visual_save_path}")
 
-                if path.exists(visual_save_path):
+            if path.exists(visual_save_path):
 
-                    path.isdir(visual_save_path)
+                path.isdir(visual_save_path)
 
-                else:
+            else:
 
-                    self.logger.info(f"Save path does not exist, creating : {visual_save_path}")
-                    makedirs(visual_save_path, exist_ok=True)
+                self.logger.info(f"Save path does not exist, creating : {visual_save_path}")
+                makedirs(visual_save_path, exist_ok=True)
 
-            except Exception as e:
+        except Exception as e:
 
-                self.logger.warning(f"Invalid save path :\n {e}")
+            self.logger.warning(f"Invalid save path :\n {e}")
 
-                return -2
+            return -2
 
-        for index, image in enumerate(self.images):
-
-            padding = ((0, (self.max_dim1 - image.shape[0])), (0, (self.max_dim2 - image.shape[1])))
-
-            self.logger.info(f"Padding image at index {index} of class {self.classes[index]} for {padding} dimensions. Image path {self.image_paths[index]}")
-
-            self.images[index] = pad(image, pad_width=padding)
+        for index in range(len(self.images)):
 
             self.logger.info(f"Computing HoG features for image at index {index} of class {self.classes[index]}. Image path {self.image_paths[index]}")
 
@@ -131,6 +130,53 @@ class HOGTrainerTemplate:
             self.hog_features.append(features)
             self.logger.info(f"Saving HoG visualization for image at index {index} of class {self.classes[index]}. Image path : {self.image_paths[index]}. Save path : {save_path}")
             imwrite(save_path, visualization)
+
+    def resizeReq(self):
+
+        for index in range(len(self.images)):
+
+            self.logger.info(f"Resizing image at index {index} of class {self.classes[index]} to {self.resize_dim1}x{self.resize_dim2} dimensions. Image path {self.image_paths[index]}")
+
+            self.images[index] = resize(self.images[index], dsize=(self.resize_dim1, self.resize_dim2))
+
+    def padSquare(self):
+
+        for index in range(len(self.images)):
+
+            d1, d2 = self.images[index].shape
+
+            if (d1 == d1):
+
+                self.logger.info(f"Skipping image square padding for image at index {index} of class {self.classes[index]}. Image path {self.image_paths[index]}")
+                continue
+
+            elif (d1 > d2):
+
+                padding = ((0, 0), (0, d1 - d2))
+
+            elif (d2 > d1):
+
+                padding = ((0, d2 - d1), (0 , 0))
+
+            self.logger.info(f"Square padding image at index {index} of class {self.classes[index]} for {padding} dimensions. Image path {self.image_paths[index]}")
+
+            self.images[index] = pad(self.images[index], pad_width=padding)
+
+    def padImages(self):
+
+        for index in len(self.images):
+
+            if (self.max_dim1 == self.images[index].shape[0] and self.max_dim2 == self.images[index].shape[1]):
+
+                self.logger.info(f"Skipping image padding for image at index {index} of class {self.classes[index]}. Image path {self.image_paths[index]}")
+                continue
+
+            padding = ((0, (self.max_dim1 - self.images[index].shape[0])), (0, (self.max_dim2 - self.images[index].shape[1])))
+
+            self.logger.info(f"Padding image at index {index} of class {self.classes[index]} for {padding} dimensions. Image path {self.image_paths[index]}")
+
+            self.images[index] = pad(self.images[index], pad_width=padding)
+
 
     def predictFace(self, image_path,  model_path = None, classifier = None):
 
@@ -172,15 +218,33 @@ class HOGTrainerTemplate:
 
         image = load_image_file(image_path, mode = "L")
 
-        if ((image.shape[0] >= classifier.max_dim1) or (image.shape[1] >= classifier.max_dim2)):
+        padding = None
+        d1, d2 = image.shape
 
-            self.logger.info(f"Resizing image loaded from {image_path} to dimensions {(classifier.max_dim2, classifier.max_dim1)} to fit HoG features")
+        if (d1 == d1):
 
-            image = resize(image, dsize = (classifier.max_dim2, classifier.max_dim1))
+            self.logger.info(f"Skipping image square padding for image at {image_path}")
 
-        self.logger.info(f"Padding image at {image_path} with {((0, (classifier.max_dim1 - image.shape[0])), (0, (classifier.max_dim2 - image.shape[1])))}")
+        elif (d1 > d2):
 
-        image = pad(image, pad_width=((0, (classifier.max_dim1 - image.shape[0])), (0, (classifier.max_dim2 - image.shape[1]))))
+            padding = ((0, 0), (0, d1 - d2))
+
+        elif (d2 > d1):
+
+            padding = ((0, d2 - d1), (0 , 0))
+
+        if (padding is not None):
+
+            self.logger.info(f"Square padding image at {image_path} with {padding}")
+
+            image = pad(image, pad_width=padding)
+
+        if ((image.shape[0] != classifier.resize_dim1) and (image.shape[1] != classifier.resize_dim2)):
+
+            self.logger.info(f"Resizing image loaded from {image_path} to dimensions {(classifier.resize_dim1, classifier.resize_dim2)} to fit HoG features")
+
+            image = resize(image, dsize = (classifier.resize_dim1, classifier.resize_dim2))
+
 
         self.logger.info(f"Computing HoG features for image loaded from {image_path}")
 
