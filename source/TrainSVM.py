@@ -22,8 +22,8 @@ class SVMTrainer(HOGTrainerTemplate):
         self.classifier.fit(self.hog_features, self.classes)
         self.logger.info(f"SVM model trained in {perf_counter() - start_time}s")
 
-        self.classifier.resize_dim1 = self.resize_dim1
-        self.classifier.resize_dim2 = self.resize_dim2
+        self.classifier.max_dim1 = self.max_dim1
+        self.classifier.max_dim2 = self.max_dim2
 
         if save_path is not None:
 

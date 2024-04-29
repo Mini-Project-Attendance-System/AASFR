@@ -1,4 +1,5 @@
 from os import listdir, path
+from random import shuffle
 
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
@@ -16,6 +17,18 @@ if __name__ == "__main__":
 
     predictions = []
     labels = []
+    paths = []
+
+    def logMetrics():
+
+        logger.info(f"Accuracy score : {accuracy_score(labels, predictions)}")
+        logger.info(f"Classification report :\n{classification_report(labels, predictions)}")
+
+        matrix = confusion_matrix(labels, predictions)
+
+        logger.info(f"Confusion matrix :\n{matrix}")
+
+    logger.info("Run 1 with sequential data feed without random passes to predictor")
 
     for directory in listdir(root):
 
@@ -25,15 +38,27 @@ if __name__ == "__main__":
 
         for image in listdir(path.join(root, directory)):
 
+            paths.append(path.join(root, directory, image))
             labels.append(directory)
 
             prediction = predictor.predictFace(path.join(root, directory, image), "trained_models/vakibcSVM.clf")
 
             predictions.append(prediction)
 
-    logger.info(f"Accuracy score : {accuracy_score(labels, predictions)}")
-    logger.info(f"Classification report :\n{classification_report(labels, predictions)}")
+    logMetrics()
+    logger.info("Run 2 with data scrambled randomly")
 
-    matrix = confusion_matrix(labels, predictions)
+    predictions = []
+    zipped_data = list(zip(paths, labels))
 
-    logger.info(f"Confusion matrix :\n{matrix}")
+    shuffle(zipped_data)
+
+    paths, labels = zip(*zipped_data)
+
+    for path in paths:
+
+        prediction = predictor.predictFace(path, "trained_models/vakibcSVM.clf")
+
+        predictions.append(prediction)
+
+    logMetrics()
