@@ -41,7 +41,7 @@ if __name__ == "__main__":
             paths.append(path.join(root, directory, image))
             labels.append(directory)
 
-            prediction = predictor.predictFace(path.join(root, directory, image), "trained_models/vakibcSVM.clf")
+            prediction = predictor.predictFace(path.join(root, directory, image), "trained_models/SVM.clf")
 
             predictions.append(prediction)
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     for path in paths:
 
-        prediction = predictor.predictFace(path, "trained_models/vakibcSVM.clf")
+        prediction = predictor.predictFace(path, "trained_models/SVM.clf")
 
         predictions.append(prediction)
 
